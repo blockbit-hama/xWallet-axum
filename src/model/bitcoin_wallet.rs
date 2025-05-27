@@ -371,4 +371,11 @@ pub enum BitcoinWalletError {
   
   #[error("Internal error: {0}")]
   InternalError(String),
+  
+  #[error("Network error: {0}")]
+  NetworkError(String),
+  
+  #[error("Network error: {0}")]
+  SigningError(String),
+  
 }
