@@ -373,6 +373,8 @@ impl From<crate::model::bitcoin_wallet::BitcoinWalletError> for WalletError {
       BWE::Bip32Error(msg) => WalletError::BitcoinBip32Error(msg),
       BWE::Bip39Error(msg) => WalletError::BitcoinBip39Error(msg),
       BWE::InternalError(msg) => WalletError::InternalError(msg),
+      BWE::NetworkError(msg) => WalletError::NetworkError(msg),
+      BWE::SigningError(msg) => WalletError::SigningError(msg),
     }
   }
 }

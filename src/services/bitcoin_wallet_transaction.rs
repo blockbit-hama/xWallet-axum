@@ -11,11 +11,10 @@ use std::io::Write;
 
 use bdk_electrum::electrum_client;
 use bdk_electrum::BdkElectrumClient;
-use bdk_wallet::bitcoin::Amount;
-use bdk_wallet::bitcoin::Network;
 use bdk_wallet::chain::collections::HashSet;
 use bdk_wallet::{KeychainKind, SignOptions};
-use bdk_wallet::bitcoin::Address;
+use bdk_wallet::bitcoin::{Amount, Address, Network};
+use std::str::FromStr;
 
 use crate::model::bitcoin_wallet::BitcoinWalletError;
 
@@ -67,8 +66,8 @@ impl BitcoinTransactionService {
     ).map_err(|e| BitcoinWalletError::InternalError(format!("Database error: {}", e)))?;
     
     let wallet_opt = Wallet::load()
-      .descriptor(KeychainKind::External, Some(&self.external_desc))
-      .descriptor(KeychainKind::Internal, Some(&self.internal_desc))
+      .descriptor(KeychainKind::External, Some(self.external_desc.as_str()))
+      .descriptor(KeychainKind::Internal, Some(self.internal_desc.as_str()))
       .extract_keys()
       .check_network(self.network)
       .load_wallet(&mut db)
@@ -76,10 +75,12 @@ impl BitcoinTransactionService {
     
     let wallet = match wallet_opt {
       Some(wallet) => wallet,
-      None => Wallet::create(&self.external_desc, &self.internal_desc)
-        .network(self.network)
-        .create_wallet(&mut db)
-        .map_err(|e| BitcoinWalletError::InternalError(format!("Wallet creation error: {}", e)))?,
+      None => {
+        Wallet::create(&self.external_desc, &self.internal_desc)
+          .network(self.network)
+          .create_wallet(&mut db)
+          .map_err(|e| BitcoinWalletError::InternalError(format!("Wallet creation error: {}", e)))?
+      },
     };
     
     Ok((wallet, db))
@@ -186,8 +187,10 @@ impl BitcoinTransactionService {
     }
     
     // 주소 파싱
-    let address: Address = to_address.parse()
-      .map_err(|e| BitcoinWalletError::InvalidAddress(format!("Invalid address: {}", e)))?;
+    let address = Address::from_str(to_address)
+      .map_err(|e| BitcoinWalletError::InvalidAddress(format!("Invalid address: {}", e)))?
+      .require_network(self.network)
+      .map_err(|e| BitcoinWalletError::InvalidAddress(format!("Address network mismatch: {}", e)))?;
     
     // 트랜잭션 빌더 생성
     let mut tx_builder = wallet.build_tx();
