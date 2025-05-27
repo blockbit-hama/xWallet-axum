@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  xwallet-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: xwallet-api
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3030
+      - LOG_LEVEL=info
+      - RUST_LOG=xWallet=info,warp=info
+    volumes:
+      # 로그 디렉토리 (선택적)
+      - ./logs:/app/logs
+    networks:
+      - xwallet-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3030/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis (선택적 - 캐싱용)
+  redis:
+    image: redis:7-alpine
+    container_name: xwallet-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - xwallet-network
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:
+
+networks:
+  xwallet-network:
+    driver: bridge
