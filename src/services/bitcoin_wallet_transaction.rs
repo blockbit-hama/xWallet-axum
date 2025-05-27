@@ -65,10 +65,13 @@ impl BitcoinTransactionService {
       &self.db_path,
     ).map_err(|e| BitcoinWalletError::InternalError(format!("Database error: {}", e)))?;
     
+    let external_desc = self.external_desc.clone();
+    let internal_desc = self.internal_desc.clone();
+    
     // 로드 시에는 참조 사용 가능
     let wallet_opt = Wallet::load()
-      .descriptor(KeychainKind::External, Some(self.external_desc.as_str()))
-      .descriptor(KeychainKind::Internal, Some(self.internal_desc.as_str()))
+      .descriptor(KeychainKind::External, Some(external_desc))
+      .descriptor(KeychainKind::Internal, Some(internal_desc))
       .extract_keys()
       .check_network(self.network)
       .load_wallet(&mut db)
@@ -77,7 +80,6 @@ impl BitcoinTransactionService {
     let wallet = match wallet_opt {
       Some(wallet) => wallet,
       None => {
-        // 생성 시에는 소유된 값 필요
         let external_desc = self.external_desc.clone();
         let internal_desc = self.internal_desc.clone();
         Wallet::create(external_desc, internal_desc)
