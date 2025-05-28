@@ -1,11 +1,4 @@
 /**
-* filename : ethereum_wallet
-* author : HAMA
-* date: 2025. 5. 27.
-* description: 
-**/
-
-/**
 * filename: handlers/ethereum_wallet.rs
 * author: HAMA
 * date: 2025. 5. 23.
@@ -13,7 +6,9 @@
 **/
 
 use axum::{Json, response::IntoResponse};
+use axum::extract::State;
 use tracing::{info, error, instrument};
+use crate::AppState;
 use crate::services::ethereum_wallet::EthereumWalletService;
 use crate::model::ethereum_wallet::*;
 use crate::error::WalletError;
@@ -25,11 +20,12 @@ use crate::response::success_response;
 
 /// 니모닉 생성 핸들러
 #[instrument]
-pub async fn generate_mnemonic(Json(request): Json<MnemonicRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn generate_mnemonic(
+  State(app_state): State<AppState>,
+  Json(request): Json<MnemonicRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating mnemonic with {} words", request.word_count);
   
-  let service = EthereumWalletService::new();
-  match service.generate_mnemonic(request.word_count) {
+  match app_state.ethereum_service.generate_mnemonic(request.word_count) {
     Ok(response) => {
       info!("Mnemonic generated successfully");
       Ok(success_response(response))
@@ -43,11 +39,12 @@ pub async fn generate_mnemonic(Json(request): Json<MnemonicRequest>) -> Result<i
 
 /// 니모닉 검증 핸들러
 #[instrument]
-pub async fn validate_mnemonic(Json(request): Json<MnemonicValidationRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn validate_mnemonic(
+  State(app_state): State<AppState>,
+  Json(request): Json<MnemonicValidationRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Validating mnemonic");
   
-  let service = EthereumWalletService::new();
-  match service.validate_mnemonic(&request.mnemonic) {
+  match app_state.ethereum_service.validate_mnemonic(&request.mnemonic) {
     Ok(response) => {
       info!("Mnemonic validation completed: {}", response.valid);
       Ok(success_response(response))
@@ -65,11 +62,12 @@ pub async fn validate_mnemonic(Json(request): Json<MnemonicValidationRequest>) -
 
 /// 계정 생성 핸들러
 #[instrument]
-pub async fn create_account(Json(request): Json<AccountRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_account(
+  State(app_state): State<AppState>,
+  Json(request): Json<AccountRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating account for path: {}", request.path);
   
-  let service = EthereumWalletService::new();
-  match service.create_account(request) {
+  match app_state.ethereum_service.create_account(request) {
     Ok(response) => {
       info!("Account created successfully");
       Ok(success_response(response))
@@ -83,11 +81,12 @@ pub async fn create_account(Json(request): Json<AccountRequest>) -> Result<impl 
 
 /// 다중 계정 생성 핸들러
 #[instrument]
-pub async fn create_multiple_accounts(Json(request): Json<MultipleAccountsRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_multiple_accounts(
+  State(app_state): State<AppState>,
+  Json(request): Json<MultipleAccountsRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating {} accounts for account index {}", request.count, request.account_index);
   
-  let service = EthereumWalletService::new();
-  match service.create_multiple_accounts(request) {
+  match app_state.ethereum_service.create_multiple_accounts(request) {
     Ok(response) => {
       info!("Multiple accounts created successfully");
       Ok(success_response(response))
@@ -101,11 +100,12 @@ pub async fn create_multiple_accounts(Json(request): Json<MultipleAccountsReques
 
 /// 개인키로부터 계정 생성 핸들러
 #[instrument]
-pub async fn create_account_from_private_key(Json(request): Json<PrivateKeyRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_account_from_private_key(
+  State(app_state): State<AppState>,
+  Json(request): Json<PrivateKeyRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating account from private key");
   
-  let service = EthereumWalletService::new();
-  match service.create_account_from_private_key(request) {
+  match app_state.ethereum_service.create_account_from_private_key(request) {
     Ok(response) => {
       info!("Account created from private key successfully");
       Ok(success_response(response))
@@ -119,11 +119,11 @@ pub async fn create_account_from_private_key(Json(request): Json<PrivateKeyReque
 
 /// 랜덤 계정 생성 핸들러
 #[instrument]
-pub async fn create_random_account() -> Result<impl IntoResponse, WalletError> {
+pub async fn create_random_account(
+  State(app_state): State<AppState>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating random account");
   
-  let service = EthereumWalletService::new();
-  match service.create_random_account() {
+  match app_state.ethereum_service.create_random_account() {
     Ok(response) => {
       info!("Random account created successfully");
       Ok(success_response(response))
@@ -141,11 +141,12 @@ pub async fn create_random_account() -> Result<impl IntoResponse, WalletError> {
 
 /// HD 지갑 생성 핸들러
 #[instrument]
-pub async fn create_hd_wallet(Json(request): Json<HdWalletRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_hd_wallet(
+  State(app_state): State<AppState>,
+  Json(request): Json<HdWalletRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating HD wallet");
   
-  let service = EthereumWalletService::new();
-  match service.create_hd_wallet(request) {
+  match app_state.ethereum_service.create_hd_wallet(request) {
     Ok(response) => {
       info!("HD wallet created successfully");
       Ok(success_response(response))
@@ -159,11 +160,12 @@ pub async fn create_hd_wallet(Json(request): Json<HdWalletRequest>) -> Result<im
 
 /// 다중 계정 지갑 생성 핸들러
 #[instrument]
-pub async fn create_multi_account_wallet(Json(request): Json<MultiAccountWalletRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_multi_account_wallet(
+  State(app_state): State<AppState>,
+  Json(request): Json<MultiAccountWalletRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating multi-account wallet with {} accounts", request.accounts.len());
   
-  let service = EthereumWalletService::new();
-  match service.create_multi_account_wallet(request) {
+  match app_state.ethereum_service.create_multi_account_wallet(request) {
     Ok(response) => {
       info!("Multi-account wallet created successfully");
       Ok(success_response(response))
@@ -177,11 +179,12 @@ pub async fn create_multi_account_wallet(Json(request): Json<MultiAccountWalletR
 
 /// HD 지갑에 계정 추가 핸들러
 #[instrument]
-pub async fn add_account_to_wallet(Json(request): Json<AddAccountRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn add_account_to_wallet(
+  State(app_state): State<AppState>,
+  Json(request): Json<AddAccountRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Adding account to HD wallet");
   
-  let service = EthereumWalletService::new();
-  match service.add_account_to_hd_wallet(request) {
+  match app_state.ethereum_service.add_account_to_hd_wallet(request) {
     Ok(response) => {
       info!("Account added to HD wallet successfully");
       Ok(success_response(response))
@@ -195,11 +198,12 @@ pub async fn add_account_to_wallet(Json(request): Json<AddAccountRequest>) -> Re
 
 /// 주소 생성 핸들러
 #[instrument]
-pub async fn generate_addresses(Json(request): Json<GenerateAddressesRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn generate_addresses(
+  State(app_state): State<AppState>,
+  Json(request): Json<GenerateAddressesRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Generating {} addresses for account {}", request.count, request.account_index);
   
-  let service = EthereumWalletService::new();
-  match service.generate_addresses(request) {
+  match app_state.ethereum_service.generate_addresses(request) {
     Ok(response) => {
       info!("Addresses generated successfully");
       Ok(success_response(response))
@@ -213,11 +217,12 @@ pub async fn generate_addresses(Json(request): Json<GenerateAddressesRequest>) -
 
 /// 키스토어 생성 핸들러
 #[instrument]
-pub async fn create_keystore(Json(request): Json<CreateKeystoreRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_keystore(
+  State(app_state): State<AppState>,
+  Json(request): Json<CreateKeystoreRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating keystore for address: {}", request.address);
   
-  let service = EthereumWalletService::new();
-  match service.create_keystore(request) {
+  match app_state.ethereum_service.create_keystore(request) {
     Ok(response) => {
       info!("Keystore created successfully");
       Ok(success_response(response))
@@ -235,11 +240,12 @@ pub async fn create_keystore(Json(request): Json<CreateKeystoreRequest>) -> Resu
 
 /// 메시지 서명 핸들러
 #[instrument]
-pub async fn sign_message(Json(request): Json<SignMessageRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn sign_message(
+  State(app_state): State<AppState>,
+  Json(request): Json<SignMessageRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Signing message");
   
-  let service = EthereumWalletService::new();
-  match service.sign_message(request) {
+  match app_state.ethereum_service.sign_message(request) {
     Ok(response) => {
       info!("Message signed successfully");
       Ok(success_response(response))
@@ -253,11 +259,12 @@ pub async fn sign_message(Json(request): Json<SignMessageRequest>) -> Result<imp
 
 /// 서명 검증 핸들러
 #[instrument]
-pub async fn verify_signature(Json(request): Json<VerifySignatureRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn verify_signature(
+  State(app_state): State<AppState>,
+  Json(request): Json<VerifySignatureRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Verifying signature");
   
-  let service = EthereumWalletService::new();
-  match service.verify_signature(request) {
+  match app_state.ethereum_service.verify_signature(request) {
     Ok(response) => {
       info!("Signature verification completed: {}", response.valid);
       Ok(success_response(response))
@@ -275,11 +282,12 @@ pub async fn verify_signature(Json(request): Json<VerifySignatureRequest>) -> Re
 
 /// 트랜잭션 생성 핸들러
 #[instrument]
-pub async fn create_transaction(Json(request): Json<CreateTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn create_transaction(
+  State(app_state): State<AppState>,
+  Json(request): Json<CreateTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Creating transaction to: {}", request.to);
   
-  let service = EthereumWalletService::new();
-  match service.create_transaction(request) {
+  match app_state.ethereum_service.create_transaction(request) {
     Ok(response) => {
       info!("Transaction created successfully");
       Ok(success_response(response))
@@ -293,11 +301,12 @@ pub async fn create_transaction(Json(request): Json<CreateTransactionRequest>) -
 
 /// 트랜잭션 서명 핸들러
 #[instrument]
-pub async fn sign_transaction(Json(request): Json<SignTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn sign_transaction(
+  State(app_state): State<AppState>,
+  Json(request): Json<SignTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Signing transaction: {}", request.transaction_hash);
   
-  let service = EthereumWalletService::new();
-  match service.sign_transaction(request) {
+  match app_state.ethereum_service.sign_transaction(request) {
     Ok(response) => {
       info!("Transaction signed successfully");
       Ok(success_response(response))
@@ -311,11 +320,12 @@ pub async fn sign_transaction(Json(request): Json<SignTransactionRequest>) -> Re
 
 /// Sepolia 네트워크로 트랜잭션 전송 핸들러
 #[instrument]
-pub async fn send_transaction(Json(request): Json<SendTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn send_transaction(
+  State(app_state): State<AppState>,
+  Json(request): Json<SendTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Sending transaction to Sepolia network: {}", request.to);
   
-  let service = EthereumWalletService::new();
-  match service.send_transaction(request).await {
+  match app_state.ethereum_service.send_transaction(request).await {
     Ok(response) => {
       info!("Transaction sent successfully: {}", response.transaction_hash);
       Ok(success_response(response))
@@ -329,11 +339,12 @@ pub async fn send_transaction(Json(request): Json<SendTransactionRequest>) -> Re
 
 /// Raw 트랜잭션 전송 핸들러
 #[instrument]
-pub async fn send_raw_transaction(Json(request): Json<SendRawTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn send_raw_transaction(
+  State(app_state): State<AppState>,
+  Json(request): Json<SendRawTransactionRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Sending raw transaction to Sepolia network");
   
-  let service = EthereumWalletService::new();
-  match service.send_raw_transaction(&request.signed_transaction).await {
+  match app_state.ethereum_service.send_raw_transaction(&request.signed_transaction).await {
     Ok(response) => {
       let raw_response = SendRawTransactionResponse {
         transaction_hash: response.transaction_hash,
@@ -352,11 +363,12 @@ pub async fn send_raw_transaction(Json(request): Json<SendRawTransactionRequest>
 
 /// 가스 추정 핸들러
 #[instrument]
-pub async fn estimate_gas(Json(request): Json<EstimateGasRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn estimate_gas(
+  State(app_state): State<AppState>,
+  Json(request): Json<EstimateGasRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Estimating gas for transaction to: {}", request.to);
   
-  let service = EthereumWalletService::new();
-  match service.estimate_gas(request).await {
+  match app_state.ethereum_service.estimate_gas(request).await {
     Ok(response) => {
       info!("Gas estimation completed: {} (recommended: {})",
                       response.estimated_gas, response.gas_limit_recommended);
@@ -371,12 +383,13 @@ pub async fn estimate_gas(Json(request): Json<EstimateGasRequest>) -> Result<imp
 
 /// 수수료 계산 핸들러
 #[instrument]
-pub async fn calculate_fee(Json(request): Json<CalculateFeeRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn calculate_fee(
+  State(app_state): State<AppState>,
+  Json(request): Json<CalculateFeeRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Calculating fee for gas_limit: {}, gas_price: {} Gwei",
               request.gas_limit, request.gas_price_gwei);
   
-  let service = EthereumWalletService::new();
-  match service.calculate_fee(request).await {
+  match app_state.ethereum_service.calculate_fee(request).await {
     Ok(response) => {
       info!("Fee calculation completed successfully");
       Ok(success_response(response))
@@ -390,11 +403,11 @@ pub async fn calculate_fee(Json(request): Json<CalculateFeeRequest>) -> Result<i
 
 /// 네트워크 상태 확인 핸들러
 #[instrument]
-pub async fn get_network_status() -> Result<impl IntoResponse, WalletError> {
+pub async fn get_network_status(
+  State(app_state): State<AppState>) -> Result<impl IntoResponse, WalletError> {
   info!("Checking Sepolia network status");
   
-  let service = EthereumWalletService::new();
-  match service.get_network_status().await {
+  match app_state.ethereum_service.get_network_status().await {
     Ok(response) => {
       info!("Network status retrieved successfully");
       Ok(success_response(response))
@@ -412,11 +425,12 @@ pub async fn get_network_status() -> Result<impl IntoResponse, WalletError> {
 
 /// 단위 변환 핸들러
 #[instrument]
-pub async fn convert_units(Json(request): Json<ConversionRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn convert_units(
+  State(app_state): State<AppState>,
+  Json(request): Json<ConversionRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Converting {} {} to {}", request.value, request.from_unit, request.to_unit);
   
-  let service = EthereumWalletService::new();
-  match service.convert_units(request) {
+  match app_state.ethereum_service.convert_units(request) {
     Ok(response) => {
       info!("Unit conversion completed successfully");
       Ok(success_response(response))
@@ -430,11 +444,12 @@ pub async fn convert_units(Json(request): Json<ConversionRequest>) -> Result<imp
 
 /// 주소 검증 핸들러
 #[instrument]
-pub async fn validate_address(Json(request): Json<ValidateAddressRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn validate_address(
+  State(app_state): State<AppState>,
+  Json(request): Json<ValidateAddressRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Validating address: {}", request.address);
   
-  let service = EthereumWalletService::new();
-  match service.validate_address(request) {
+  match app_state.ethereum_service.validate_address(request) {
     Ok(response) => {
       info!("Address validation completed: valid={}, checksum_valid={}",
                       response.valid, response.checksum_valid);
@@ -449,11 +464,12 @@ pub async fn validate_address(Json(request): Json<ValidateAddressRequest>) -> Re
 
 /// 주소 정보 조회 핸들러
 #[instrument]
-pub async fn get_address_info(Json(request): Json<AddressInfoRequest>) -> Result<impl IntoResponse, WalletError> {
+pub async fn get_address_info(
+  State(app_state): State<AppState>,
+  Json(request): Json<AddressInfoRequest>) -> Result<impl IntoResponse, WalletError> {
   info!("Getting address info for: {}", request.address);
   
-  let service = EthereumWalletService::new();
-  match service.get_address_info(request) {
+  match app_state.ethereum_service.get_address_info(request) {
     Ok(response) => {
       info!("Address info retrieved successfully");
       Ok(success_response(response))

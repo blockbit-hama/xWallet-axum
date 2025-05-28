@@ -9,11 +9,11 @@ use axum::{
   routing::{get, post},
   Router,
 };
-
+use crate::AppState;
 use crate::handlers::bitcoin_wallet;
 
 /// 비트코인 지갑 관련 모든 라우트 구성
-pub fn bitcoin_routes() -> Router {
+pub fn bitcoin_routes() -> Router<AppState> {
   Router::new()
     // ========================================
     // 니모닉 관련 라우트

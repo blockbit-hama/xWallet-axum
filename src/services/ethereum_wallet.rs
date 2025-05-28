@@ -27,6 +27,8 @@ use crate::error::WalletError;
 use crate::model::ethereum_wallet::*;
 
 /// 통합 이더리움 지갑 서비스 - 모든 지갑/트랜잭션 기능 제공
+
+#[derive(Debug)]
 pub struct EthereumWalletService {
   sepolia_rpc_url: String,
   chain_id: u64,

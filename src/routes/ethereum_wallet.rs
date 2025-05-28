@@ -2,7 +2,7 @@
 * filename : ethereum_wallet
 * author : HAMA
 * date: 2025. 5. 27.
-* description: 
+* description:
 **/
 
 /**
@@ -17,11 +17,11 @@ use axum::{
   Router,
   Json,
 };
-
+use crate::AppState;
 use crate::handlers::ethereum_wallet;
 
 /// 이더리움 지갑 관련 모든 라우트 구성
-pub fn ethereum_routes() -> Router {
+pub fn ethereum_routes() -> Router<AppState> {
   Router::new()
     // ========================================
     // 니모닉 관련 라우트

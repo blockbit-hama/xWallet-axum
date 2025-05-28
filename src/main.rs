@@ -14,6 +14,7 @@ use axum::{
     Router,
 };
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::{
@@ -31,11 +32,19 @@ mod handlers;
 mod model;
 mod services;
 
+#[derive(Clone, Debug)]
+pub struct AppState {
+    pub ethereum_service: Arc<EthereumWalletService>,
+    pub bitcoin_service: Arc<BitcoinWalletService>,  // 나중에 추가
+}
+
 use routes::{
     ethereum_wallet::ethereum_routes,
     bitcoin_wallet::bitcoin_routes  // 비트코인 라우트 추가
 };
 use crate::config::Config;
+use crate::services::bitcoin_wallet::BitcoinWalletService;
+use crate::services::ethereum_wallet::EthereumWalletService;
 
 /// 헬스체크 핸들러
 async fn health_check() -> axum::response::Json<serde_json::Value> {
@@ -52,7 +61,7 @@ async fn health_check() -> axum::response::Json<serde_json::Value> {
 }
 
 /// 애플리케이션 라우터 구성
-fn create_app() -> Router {
+fn create_app(app_state: AppState) -> Router {
     // CORS 설정
     let cors = CorsLayer::new()
       .allow_origin("*".parse::<HeaderValue>().unwrap())
@@ -73,6 +82,7 @@ fn create_app() -> Router {
             .layer(trace_layer)
             .layer(cors)
       )
+      .with_state(app_state)
 }
 
 /// 로깅 초기화
@@ -236,8 +246,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // API 정보 출력
     print_api_info(&config);
     
+    // 서비스를 한 번만 생성
+    let ethereum_service = Arc::new(EthereumWalletService::new());
+    let bitcoin_service = Arc::new(BitcoinWalletService::new());
+    
+    let app_state = AppState {
+        ethereum_service,
+        bitcoin_service,
+    };
+    
     // 애플리케이션 생성
-    let app = create_app();
+    let app = create_app(app_state);
     
     // 서버 주소 설정
     let addr: SocketAddr = format!("{}:{}", config.host, config.port)

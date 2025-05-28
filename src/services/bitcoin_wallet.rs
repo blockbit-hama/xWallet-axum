@@ -13,6 +13,7 @@ use bdk_wallet::keys::{DerivableKey, ExtendedKey};
 use bip39::{Language, Mnemonic};
 use crate::model::bitcoin_wallet::*;
 
+#[derive(Debug)]
 pub struct BitcoinWalletService;
 
 impl BitcoinWalletService {
